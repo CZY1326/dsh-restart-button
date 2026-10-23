@@ -1,5 +1,5 @@
 {
-  "name": "dsh-restart-button",
+  "name": "@czy1326/dsh-restart-button",
   "version": "1.0.0",
   "description": "Restart DeepSeek Harness from the conversation header — plus an optional, version-pinned patch that adds a tray menu entry and a graceful relaunch route.",
   "type": "module",
@@ -23,11 +23,45 @@
     "deepseek",
     "restart",
     "desktop",
-    "tray"
+    "tray",
+    "cordis"
   ],
   "license": "MIT",
+  "author": "CZY1326",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CZY1326/dsh-restart-button.git"
+  },
+  "homepage": "https://github.com/CZY1326/dsh-restart-button#readme",
+  "bugs": {
+    "url": "https://github.com/CZY1326/dsh-restart-button/issues"
+  },
   "engines": {
     "node": ">=20"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-host-webserver": "*",
+    "@deepseek-ai/dsh-client-locale": "*",
+    "@deepseek-ai/dsh-client-ui-conversation": "*",
+    "@deepseek-ai/dsh-client-ui-primitives": "*"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-host-webserver": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-client-locale": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-client-ui-conversation": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-client-ui-primitives": {
+      "optional": true
+    }
   },
   "dsh": {
     "bundle": {
@@ -41,5 +75,9 @@
       ],
       "platform": "web"
     }
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

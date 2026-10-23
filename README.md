@@ -1,4 +1,4 @@
-# dsh-restart-button
+# @czy1326/dsh-restart-button
 
 给 DeepSeek Harness 桌面端加一个「结束进程 → 立刻拉起」的重启入口：聊天标题栏右上角的圆形箭头，
 可选再往前一步，用一个小补丁把「重启」加进托盘菜单。
@@ -34,10 +34,13 @@ The header button works out of the box. The patch only upgrades path 2 to a grac
 ## 安装 / Install
 
 ```powershell
-# 推荐：显式 git 地址（等价于取默认分支 main）
+# 推荐：从 npm 装（发布后免构建，也不用 clone 仓库）
+dsh plugin add @czy1326/dsh-restart-button
+
+# 或者直接从 GitHub 装
 dsh plugin add git+https://github.com/CZY1326/dsh-restart-button.git
 
-# 简写（npm/pnpm 语义）
+# GitHub 简写（npm/pnpm 语义）
 dsh plugin add github:CZY1326/dsh-restart-button
 ```
 
@@ -91,7 +94,7 @@ node scripts/restore-asar.cjs           # 还原（应用需先退出）
 ## 卸载 / Uninstall
 
 ```powershell
-dsh plugin remove dsh-restart-button
+dsh plugin remove @czy1326/dsh-restart-button
 node scripts/restore-asar.cjs   # 只在你打过补丁时需要
 ```
 

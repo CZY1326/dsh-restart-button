@@ -1,3 +1,5 @@
+# @czy1326/dsh-restart-button bundle patch: inserts this plugin into the
+# loader tree when the package is installed as its own DSH bundle.
 - insert:
     - id: dsh-restart-button
-      name: 'dsh-restart-button'
+      name: '@czy1326/dsh-restart-button'

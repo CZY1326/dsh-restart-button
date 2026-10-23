@@ -1,6 +1,6 @@
 {
   "name": "@czy1326/dsh-restart-button",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Restart DeepSeek Harness from the conversation header — plus an optional, version-pinned patch that adds a tray menu entry and a graceful relaunch route.",
   "type": "module",
   "main": "lib/index.js",

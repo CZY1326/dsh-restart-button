@@ -58,6 +58,9 @@ node scripts/patch-asar.cjs --dry-run
 node scripts/patch-asar.cjs
 ```
 
+脚本会自己找到 `app.asar`（常见安装目录、`Programs\*deepseek*`，以及正在运行的应用 exe 所在目录）；
+找不到时把 `/dsh-restart-button/ping` 返回的 `asar` 传给 `--asar` 即可。
+
 - **等长原地补丁**：asar 是一个带 JSON 索引的大文件，长度一变后面所有条目都要整体搬家。
   所以补丁把插入的字节数从旁边的文档注释里原样抠回来（注释改写到完全相同的宽度），
   文件长度、索引偏移、其他条目全部不变。
@@ -106,8 +109,9 @@ dsh-restart-button/
 ### 自检 / Self-test
 
 ```powershell
-# 宿主是否认出桌面端、重启目标是谁
+# 宿主是否认出桌面端、重启目标是谁、app.asar 在哪
 curl http://127.0.0.1:<port>/dsh-restart-button/ping
+# → {"ok":true,"desktop":true,"exe":"…\\DeepSeek Harness.exe","resources":"…","asar":"…\\resources\\app.asar"}
 
 # 只跑「派生 helper」这一段，不杀任何进程，结果写进 %TEMP%\dsh-restart-button-probe.txt
 curl -X POST -H "x-dsh-restart: 1" "http://127.0.0.1:<port>/dsh-restart-button/restart?probe=1"

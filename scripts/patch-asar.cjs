@@ -27,6 +27,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const crypto = require("node:crypto");
+const { execFileSync } = require("node:child_process");
 
 const ENTRY = "lib/main.js";
 const BAK_SUFFIX = ".dsh-restart-button.bak";
@@ -141,16 +142,62 @@ function locateArchive() {
 		return path.resolve(value);
 	}
 	if (process.env.DSH_ASAR !== void 0 && process.env.DSH_ASAR !== "") return path.resolve(process.env.DSH_ASAR);
-	const candidates = [
-		path.join(process.env.LOCALAPPDATA ?? "", "Programs", "DeepSeekHarness", "resources", "app.asar"),
-		path.join(process.env.LOCALAPPDATA ?? "", "Programs", "DeepSeek Harness", "resources", "app.asar"),
-		path.join(process.env.ProgramFiles ?? "", "DeepSeekHarness", "resources", "app.asar"),
-		path.join(process.env.ProgramFiles ?? "", "DeepSeek Harness", "resources", "app.asar"),
-		path.join(os.homedir(), "AppData", "Local", "Programs", "DeepSeekHarness", "resources", "app.asar")
+	const named = [
+		"DeepSeekHarness",
+		"DeepSeek Harness",
+		"deepseek-harness",
+		"deepseek harness"
 	];
-	const hit = candidates.find((candidate) => candidate !== "" && fs.existsSync(candidate));
-	if (hit === void 0) throw new Error("cannot find app.asar; pass --asar <path> or set DSH_ASAR");
-	return hit;
+	const roots = [
+		path.join(process.env.LOCALAPPDATA ?? "", "Programs"),
+		path.join(process.env.ProgramFiles ?? ""),
+		path.join(process.env["ProgramFiles(x86)"] ?? "")
+	];
+	const candidates = [];
+	for (const root of roots) {
+		if (root === "") continue;
+		for (const name of named) candidates.push(path.join(root, name, "resources", "app.asar"));
+		// `Programs` holds one directory per installed app; match by name prefix.
+		if (fs.existsSync(root)) {
+			for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+				if (entry.isDirectory() === false) continue;
+				if (/deepseek/i.test(entry.name) === false) continue;
+				candidates.push(path.join(root, entry.name, "resources", "app.asar"));
+			}
+		}
+	}
+	// The running application knows exactly where it lives.
+	for (const hit of candidates) {
+		if (hit !== "" && fs.existsSync(hit)) return hit;
+	}
+	const running = runningArchive();
+	if (running !== null) return running;
+	throw new Error(
+		"cannot find app.asar; run `node scripts/patch-asar.cjs --asar <path to resources\\app.asar>` " +
+			"(the value printed by GET /dsh-restart-button/ping as `asar`) or set DSH_ASAR"
+	);
+}
+
+/** Resolves app.asar from the path of the running desktop executable, if any. */
+function runningArchive() {
+	if (process.platform !== "win32") return null;
+	try {
+		const output = execFileSync(
+			"powershell.exe",
+			[
+				"-NoProfile",
+				"-NonInteractive",
+				"-Command",
+				"Get-Process | Where-Object { $_.ProcessName -like '*eep*ek*' } | Select-Object -First 1 -ExpandProperty Path"
+			],
+			{ encoding: "utf8", windowsHide: true, timeout: 15000 }
+		).trim();
+		if (output === "") return null;
+		const candidate = path.join(path.dirname(output), "resources", "app.asar");
+		return fs.existsSync(candidate) ? candidate : null;
+	} catch {
+		return null;
+	}
 }
 
 /**

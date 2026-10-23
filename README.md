@@ -34,14 +34,19 @@ The header button works out of the box. The patch only upgrades path 2 to a grac
 ## 安装 / Install
 
 ```powershell
-# 从 GitHub 装（pnpm 会按仓库默认分支取）
-dsh plugin add github:<你的用户名>/dsh-restart-button
+# 推荐：显式 git 地址（等价于取默认分支 main）
+dsh plugin add git+https://github.com/CZY1326/dsh-restart-button.git
 
-# 或显式 git 地址
-dsh plugin add git+https://github.com/<你的用户名>/dsh-restart-button.git
+# 简写（npm/pnpm 语义）
+dsh plugin add github:CZY1326/dsh-restart-button
 ```
 
 装完重启一次应用（或刷新页面）即可看到按钮。
+
+> 仓库里提交的就是可直接运行的 JS（`lib/index.js`、`lib/client.js`），`package.json` 没有
+> `prepare`/`postinstall` 脚本，所以安装时**不需要构建**，也不需要给 pnpm 开 `allowBuilds`。
+> 如果你的网络把 `github.com` 改写到了镜像/代理而推送拉取失败，把地址写成
+> `git+https://github.com:443/CZY1326/dsh-restart-button.git` 可绕过 URL 重写。
 
 > 桌面端的 profile 由 Electron 应用独占管理，装插件前请**完全退出应用**，否则 profile 会被占用。
 

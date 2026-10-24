@@ -95,6 +95,13 @@ const SUPPORTED = [
 		]
 	}
 ];
+// 0.2.1-rc.3 ships the very same main.js: only the embedded version string moved
+// from rc.2 to rc.3 (same byte length), so anchors, edits and donors are shared.
+SUPPORTED.push({
+	...SUPPORTED[0],
+	version: "0.2.1-rc.3",
+	sha256: "f05dd366f6c468bedd83f07372bc59d3d6b3f6bcc6950565c8b4173597e3ba93"
+});
 
 const sha256 = (buffer) => crypto.createHash("sha256").update(buffer).digest("hex");
 
@@ -113,10 +120,51 @@ function readArchive(file) {
 		if (candidate.jsonSize <= 0 || candidate.jsonStart + candidate.jsonSize > buffer.length) continue;
 		try {
 			const json = JSON.parse(buffer.toString("utf8", candidate.jsonStart, candidate.jsonStart + candidate.jsonSize));
-			if (json !== null && typeof json === "object" && json.files !== void 0) return { buffer, base: candidate.base, json };
+			if (json !== null && typeof json === "object" && json.files !== void 0) return { buffer, base: alignBase(buffer, json, candidate.base), json };
 		} catch {}
 	}
 	throw new Error(`cannot parse the asar header of ${file}`);
+}
+
+/**
+ * Some archives pad the payload by a byte or two, so the offsets in the header
+ * do not always resolve from the base the header arithmetic produces. A single
+ * entry carries a SHA-256 of its own bytes, which makes the padding measurable:
+ * probe the first small entry at base + shift for a few shifts and trust the
+ * one that reproduces the recorded hash.
+ * @param buffer - whole archive.
+ * @param json - parsed header.
+ * @param base - base the header arithmetic produced.
+ */
+function alignBase(buffer, json, base) {
+	const probes = [];
+	(function collect(node) {
+		for (const child of Object.values(node.files ?? {})) {
+			if (child.files !== void 0) {
+				collect(child);
+				continue;
+			}
+			if (child.unpacked === true || child.integrity?.hash === void 0 || child.size === void 0) continue;
+			if (probes.length >= 40) return;
+			probes.push(child);
+		}
+	})(json);
+	const votes = new Map();
+	for (const probe of probes) {
+		const start = Number(probe.offset ?? 0);
+		const size = Number(probe.size);
+		for (let shift = 0; shift <= 3; shift++) {
+			const from = base + shift + start;
+			if (from < 0 || from + size > buffer.length) continue;
+			if (sha256(buffer.subarray(from, from + size)) === probe.integrity.hash) {
+				votes.set(shift, (votes.get(shift) ?? 0) + 1);
+				break;
+			}
+		}
+	}
+	if (votes.size === 0) return base;
+	const best = [...votes.entries()].sort((left, right) => right[1] - left[1] || left[0] - right[0]);
+	return base + best[0][0];
 }
 
 /**
@@ -264,7 +312,7 @@ function main() {
 	try {
 		const meta = pick(archive.json, "package.json");
 		const start = archive.base + Number(meta.offset);
-		packagedVersion = JSON.parse(archive.buffer.toString("utf8", start, start + Number(meta.size))).version ?? "unknown";
+		packagedVersion = JSON.parse(archive.buffer.toString("utf8", start, start + Number(meta.size)).replace(/^\uFEFF/, "")).version ?? "unknown";
 	} catch {}
 
 	console.log(`archive:  ${archivePath}`);

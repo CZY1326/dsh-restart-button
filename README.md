@@ -88,8 +88,12 @@ node scripts/restore-asar.cjs           # 还原（应用需先退出）
 | 应用版本 | 状态 |
 | --- | --- |
 | 0.2.1-rc.2 | ✅ 已内置指纹 |
+| 0.2.1-rc.3 | ✅ 已内置指纹（`lib/main.js` 与 rc.2 只差版本号字符串） |
 
 其他版本：脚本会打印 `sha256`，提 issue 附上即可加进来。
+
+> 自定义安装目录（例如装在 `D:\Tools\...`）时脚本的自动探测找不到 `app.asar`，
+> 把 `/dsh-restart-button/ping` 返回的 `asar` 传给 `--asar` 即可。
 
 ## 卸载 / Uninstall
 
